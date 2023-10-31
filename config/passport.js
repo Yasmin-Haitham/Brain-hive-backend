@@ -12,13 +12,13 @@ module.exports = (passport) => {
       },
       async (username, password, done) => {
         try {
-          const user = await User.findOne({ email: username });
+          const user = await User.findOne({ Email: username });
 
           if (!user) {
             return done(null, false, { message: "Incorrect email." });
           }
 
-          const isPasswordValid = await bcrypt.compare(password, user.password);
+          const isPasswordValid = await bcrypt.compare(password, user.Password);
 
           if (isPasswordValid) {
             return done(null, user);
