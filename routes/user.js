@@ -17,7 +17,15 @@ router.get("/", async (req, res) => {
   }
 });
 
-
+// Create a route for retrieving data of the logged-in user
+router.get("/profile", (req, res) => {
+  // Check if the user is authenticated
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+  res.status(200).json({ user: req.user });
+  console.log(response.user);
+});
 
 //router create user
 router.post("/create", async function (req, res) {
@@ -43,12 +51,12 @@ router.post("/create", async function (req, res) {
     res.status(401).send({ message: "Invalid Data" });
   } else {
     const newUser = new User({
-      Name: body.firstName + ' ' + body.lastName,
+      Name: body.firstName + " " + body.lastName,
       Email: body.email,
       Password: body.password,
       PhoneNumber: body.phoneNumber,
       LearningStyle: body.LearningStyle,
-      UserType: body.UserType
+      UserType: body.UserType,
     });
     //after parsing the body and creating a new user before adding to db password must be encrypted
     bcrypt.hash(newUser.Password, 10, async (err, hash) => {
@@ -71,47 +79,52 @@ router.post("/login", (req, res, next) => {
     }
     if (!user) {
       // Handle unsuccessful login
-      return res.status(401).json({ success: false, message: "Authentication failed" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Authentication failed" });
     }
     req.logIn(user, (err) => {
       if (err) {
         return next(err);
       }
       // Handle successful login
-      return res.status(200).json({ success: true, message: "Login successful" });
+      return res
+        .status(200)
+        .json({ success: true, message: "Login successful" });
     });
   })(req, res, next);
 });
-
 
 // Update User Route
 router.put("/update/:id", async (req, res) => {
   const userId = req.params.id;
   const updatedUserData = req.body;
 
-try {
-  const user = await User.findOneAndUpdate(
-    { _id: userId },
-    { $set: updatedUserData },
-    { new: true }
-  );
+  try {
+    const user = await User.findOneAndUpdate(
+      { _id: userId },
+      { $set: updatedUserData },
+      { new: true }
+    );
 
-  if (!user) {
-    return res.status(404).send("User not found.");
+    if (!user) {
+      return res.status(404).send("User not found.");
+    }
+
+    res.status(200).send("User updated successfully.");
+  } catch (error) {
+    res.status(500).send("Error updating user.");
   }
-
-  res.status(200).send("User updated successfully.");
-} catch (error) {
-  res.status(500).send("Error updating user.");
-}
 });
-
-
 
 // Logout User Route
 router.get("/logout", (req, res) => {
-  req.logout(); // Passport's logout method
-  res.status(200).send("User logged out successfully.");
+  req.logout(function (err) {
+    if (err) {
+      return next(err);
+    }
+    res.status(200).send("User logged out successfully.");
+  }); // Passport's logout method
 });
 
 module.exports = router;
