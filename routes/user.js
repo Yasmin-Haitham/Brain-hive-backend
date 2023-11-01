@@ -24,7 +24,7 @@ router.get("/profile", (req, res) => {
     return res.status(401).json({ message: "Not authenticated" });
   }
   res.status(200).json({ user: req.user });
-  console.log(response.user);
+  console.log(req.user);
 });
 
 //router create user
