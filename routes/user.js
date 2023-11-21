@@ -19,61 +19,81 @@ router.get("/", async (req, res) => {
 
 // Create a route for retrieving data of the logged-in user
 router.get("/profile", (req, res) => {
-  // Check if the user is authenticated
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Not authenticated" });
-  }
-  res.status(200).json({ user: req.user });
+  res.send(req.user);
   console.log(req.user);
 });
 
 //router create user
 router.post("/create", async function (req, res) {
   console.log("body", req.body);
+
   const body = req.body;
-  //Create a joi schema for the user to validate data types
+
+  // Create a Joi schema for user data validation
   const schema = Joi.object({
     firstName: Joi.string().min(3).max(25),
     lastName: Joi.string().min(3).max(25),
     email: Joi.string().email(),
     password: Joi.string().pattern(/^[a-zA-Z0-9]{3,30}$/),
     phoneNumber: Joi.string(),
-    LearningStyle: Joi.string()
+    learningStyle: Joi.string()
       .valid("visual", "auditory", "read", "kinesthetic")
       .insensitive(),
-    UserType: Joi.string()
+    userType: Joi.string()
       .valid("student", "instructor", "admin")
       .insensitive(),
   });
-  //create const object error and store value if body matches schema of joi
+
+  // Validate user input against the schema
   const { error } = schema.validate(body);
+
   if (error) {
-    res.status(401).send({ message: "Invalid Data" });
-  } else {
+    // Send a 400 Bad Request response for invalid data
+    return res
+      .status(400)
+      .send({ message: "Invalid Data", details: error.details });
+  }
+
+  try {
+    // Check if the user with the given email already exists
+    const existingUser = await User.findOne({ email: req.body.email });
+
+    if (existingUser) {
+      // Send a 409 Conflict response if the user already exists
+      return res.status(409).send({ message: "User already exists" });
+    }
+
+    // Create a new user object
     const newUser = new User({
       Name: body.firstName + " " + body.lastName,
       Email: body.email,
       Password: body.password,
       PhoneNumber: body.phoneNumber,
-      LearningStyle: body.LearningStyle,
-      UserType: body.UserType,
+      LearningStyle: body.learningStyle,
+      UserType: body.userType,
     });
-    //after parsing the body and creating a new user before adding to db password must be encrypted
-    bcrypt.hash(newUser.Password, 10, async (err, hash) => {
-      if (err) throw err;
-      newUser.Password = hash;
-      newUser
-        .save()
-        .then(() => console.log("new user saved"))
-        .catch((e) => res.status(500).send(e));
-      res.send("New User Created");
-    });
+
+    // Encrypt the user's password before saving to the database
+    const hashedPassword = await bcrypt.hash(newUser.Password, 10);
+    newUser.Password = hashedPassword;
+
+    // Save the new user to the database
+    await newUser.save();
+
+    console.log("New user saved");
+
+    // Send a 201 Created response
+    res.status(201).send("New User Created");
+  } catch (error) {
+    // Handle any unexpected errors
+    console.error("Error creating user:", error);
+    res.status(500).send({ message: "Internal Server Error" });
   }
 });
 
 // Login User Route
-router.post("/login", (req, res, next) => {
-  passport.authenticate("local", (err, user, info) => {
+router.post("/login", async (req, res, next) => {
+  await passport.authenticate("local", (err, user, info) => {
     if (err) {
       return next(err);
     }
@@ -83,14 +103,21 @@ router.post("/login", (req, res, next) => {
         .status(401)
         .json({ success: false, message: "Authentication failed" });
     }
-    req.logIn(user, (err) => {
+    req.login(user, (err) => {
       if (err) {
         return next(err);
       }
+      // Set a cookie to indicate that the user is logged in
+      res.cookie("isLoggedIn", true, {
+        httpOnly: true,
+        expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+      });
+
       // Handle successful login
       return res
         .status(200)
-        .json({ success: true, message: "Login successful" });
+        .send({ success: true, message: "Login successful", uid: user._id });
+      console.log(req.user);
     });
   })(req, res, next);
 });
@@ -123,8 +150,8 @@ router.get("/logout", (req, res) => {
     if (err) {
       return next(err);
     }
-    res.status(200).send("User logged out successfully.");
   }); // Passport's logout method
+  res.status(200).send("User logged out successfully.");
 });
 
 module.exports = router;

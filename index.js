@@ -4,34 +4,27 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
+const cookieParser = require("cookie-parser");
 const session = require("express-session");
+const bodyParse = require("body-parser");
 
 const uri = process.env.CONNECTION_STRING;
 
 //create express server
 const app = express();
 
-//set port
-const port = process.env.PORT || 3030;
+//middlewares
+app.use(bodyParse.json());
+app.use(bodyParse.urlencoded({ extended: true }));
 
 // Set up CORS options
 const corsOptions = {
-  origin: "http://localhost:3000", // Replace with your client's actual URL
+  origin: "http://localhost:3000", // client's URL
+  credentials: true,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   preflightContinue: false,
   optionsSuccessStatus: 204,
 };
-
-//define user router
-const userRouter = require("./routes/user");
-
-//connect the database
-mongoose
-  .connect(uri, {})
-  .then(() => console.log("Connected to DB"))
-  .catch((err) => console.log(err));
-
-//passport init
 
 app.use(
   session({
@@ -43,6 +36,23 @@ app.use(
     },
   })
 );
+//cookie parser
+app.use(cookieParser("secret"));
+//set port
+const port = process.env.PORT || 3030;
+
+
+//define user router
+const userRouter = require("./routes/user");
+
+//connect the database
+mongoose
+  .connect(uri, {useNewUrlParser: true, useUnifiedTopology: true})
+  .then(() => console.log("Connected to DB"))
+  .catch((err) => console.log(err));
+
+//passport init
+
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -67,7 +77,7 @@ app.use((req, res, next) => {
           console.error("Error destroying session:", err);
         }
         // Redirect or respond to log out
-        return res.redirect("/logout"); // You need to define a logout route
+        return res.redirect("/user/logout"); 
       });
     } else {
       req.session.lastActivityTime = currentTime;
