@@ -36,12 +36,15 @@ router.post("/create", async function (req, res) {
     email: Joi.string().email(),
     password: Joi.string().pattern(/^[a-zA-Z0-9]{3,30}$/),
     phoneNumber: Joi.string(),
-    learningStyle: Joi.string()
-      .valid("visual", "auditory", "read", "kinesthetic")
-      .insensitive(),
-    userType: Joi.string()
-      .valid("student", "instructor", "admin")
-      .insensitive(),
+    LearningStyle: Joi.string()
+    .valid("visual", "auditory", "read", "kinesthetic", null)
+    .insensitive()
+    // learningStyle: Joi.string()
+    //   .valid("visual", "auditory", "read", "kinesthetic")
+    //   .insensitive(),
+    // userType: Joi.string()
+    //   .valid("student", "instructor", "admin")
+    //   .insensitive(),
   });
 
   // Validate user input against the schema
@@ -116,7 +119,7 @@ router.post("/login", async (req, res, next) => {
       // Handle successful login
       return res
         .status(200)
-        .send({ success: true, message: "Login successful", uid: user._id });
+        .send({ success: true, message: "Login successful", uid: user._id, LearningStyle: user.LearningStyle });
       console.log(req.user);
     });
   })(req, res, next);
