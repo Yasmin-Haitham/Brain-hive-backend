@@ -42,8 +42,9 @@ app.use(cookieParser("secret"));
 const port = process.env.PORT || 3030;
 
 
-//define user router
+//define routers
 const userRouter = require("./routes/user");
+const courseRouter = require("./routes/courses");
 
 //connect the database
 mongoose
@@ -56,6 +57,8 @@ mongoose
 app.use(passport.initialize());
 app.use(passport.session());
 
+
+
 //body parser middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -63,6 +66,7 @@ app.use(cors(corsOptions));
 
 // router
 app.use("/user", userRouter);
+app.use("/courses", courseRouter);
 
 // session managment middleware
 app.use((req, res, next) => {

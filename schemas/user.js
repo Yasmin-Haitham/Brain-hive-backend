@@ -12,7 +12,8 @@ const userSchema = new mongoose.Schema({
     VisualPercent: { type: Number },
     AuditoryPercent: { type: Number },
     ReadingPercent: { type: Number },
-    KinestheticPercent: { type: Number }
+    KinestheticPercent: { type: Number },
+    enrolledCourses:{type: Object}
 });
 
 module.exports = mongoose.model("user", userSchema);

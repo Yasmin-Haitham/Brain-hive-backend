@@ -17,6 +17,7 @@ router.get("/", async (req, res) => {
   }
 });
 
+
 // Create a route for retrieving data of the logged-in user
 router.get("/profile", (req, res) => {
   res.send(req.user);
@@ -74,6 +75,7 @@ router.post("/create", async function (req, res) {
       PhoneNumber: body.phoneNumber,
       LearningStyle: body.learningStyle,
       UserType: body.userType,
+      enrolledCourses: {}
     });
 
     // Encrypt the user's password before saving to the database
@@ -113,9 +115,8 @@ router.post("/login", async (req, res, next) => {
       // Set a cookie to indicate that the user is logged in
       res.cookie("isLoggedIn", true, {
         httpOnly: true,
-        expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+        expires: new Date(Date.now() + 12 * 60 * 60 * 1000), // 12 hours
       });
-
       // Handle successful login
       return res
         .status(200)
@@ -156,5 +157,9 @@ router.get("/logout", (req, res) => {
   }); // Passport's logout method
   res.status(200).send("User logged out successfully.");
 });
+
+
+
+
 
 module.exports = router;

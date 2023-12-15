@@ -2,14 +2,9 @@
 const mongoose = require('mongoose');
 // create course schema
 const CourseSchema = new mongoose.Schema({
-    // course has ID, Department, Instructor, Name, Content
-    id: {type: String},
+    name:{ type:String },
     department:{ type:String },
     instructor:{ type:String },
-    name:{ type:String },
-    content:{ type:String },
-    description:{type:String},
-    courseImgPath:{type:String}
 
 });
 
