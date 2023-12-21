@@ -39,10 +39,11 @@ router.post("/create", async function (req, res) {
     phoneNumber: Joi.string(),
     LearningStyle: Joi.string()
     .valid("visual", "auditory", "read", "kinesthetic", null)
-    .insensitive()
-    // learningStyle: Joi.string()
-    //   .valid("visual", "auditory", "read", "kinesthetic")
-    //   .insensitive(),
+    .insensitive(),
+    //specializations joi validate is string
+    specializations: Joi.string(),
+
+    
     // userType: Joi.string()
     //   .valid("student", "instructor", "admin")
     //   .insensitive(),
