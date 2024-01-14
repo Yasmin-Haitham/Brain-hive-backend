@@ -51,7 +51,8 @@ router.post("/enroll", async (req, res) => {
   const existingCourse = entries; // Access the first entry
 
   try {
-    const Coursesdb = await course.findOne({ name: courseName });
+    let Coursesdb = await course.findOne({ name: courseName });
+    
     if (!Coursesdb) {
       const newCourse = new course({
         name: courseName,
