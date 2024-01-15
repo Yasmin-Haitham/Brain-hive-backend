@@ -80,4 +80,34 @@ router.post("/enroll", async (req, res) => {
     // Handle specific errors and send appropriate responses to the client
   }
 });
+//get courses from contentful with filter of user courses passed in the req.params
+router.get('/profileCourses', async (req, res) => {
+  const userCoursesArray = req.params.userCourses;
+  // console.log("user courses: " + userCoursesArray);
+
+  try {
+    // Use the $in operator to filter courses based on the names in userCoursesArray
+    const entries = await contentClient.getEntries({
+      content_type: 'course',
+      'fields.courseName[in]': userCoursesArray,
+    });
+
+    // Transform Contentful data as needed
+    const coursesFromContentful = entries.items.map((item) => ({
+      id: item.sys.id,
+      courseName: item.fields.courseName,
+      description: item.fields.courseDescription,
+      courseImage: item.fields.courseImage,
+      courseContent: item.fields.courseContent,
+      courseDepartment: item.fields.courseDepartment,
+    }));
+
+    // console.log("coursesFromContentful: ", coursesFromContentful);
+    res.json(coursesFromContentful);
+  } catch (error) {
+    console.error('Error getting user courses from Contentful:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 module.exports = router;

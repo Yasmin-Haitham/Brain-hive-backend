@@ -21,7 +21,7 @@ router.get("/", async (req, res) => {
 // Create a route for retrieving data of the logged-in user
 router.get("/profile", (req, res) => {
   res.send(req.user);
-  console.log(req.user);
+  console.log("profile nav: "+req.user);
 });
 
 //router create user
@@ -122,7 +122,7 @@ router.post("/login", async (req, res, next) => {
       return res
         .status(200)
         .send({ success: true, message: "Login successful", uid: user._id, LearningStyle: user.LearningStyle });
-      console.log(req.user);
+      
     });
   })(req, res, next);
 });
