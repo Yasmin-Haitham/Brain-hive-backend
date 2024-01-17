@@ -84,7 +84,7 @@ router.post("/enroll", async (req, res) => {
 //get courses from contentful with filter of user courses passed in the req.params
 router.get('/profileCourses', async (req, res) => {
   const userCoursesArray = req.query.userCourses;
-  console.log(userCoursesArray)
+  
 
   try {
     // Use the $in operator to filter courses based on the names in userCoursesArray
