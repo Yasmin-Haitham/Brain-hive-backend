@@ -80,10 +80,11 @@ router.post("/enroll", async (req, res) => {
     // Handle specific errors and send appropriate responses to the client
   }
 });
+
 //get courses from contentful with filter of user courses passed in the req.params
 router.get('/profileCourses', async (req, res) => {
-  const userCoursesArray = req.params.userCourses;
-  // console.log("user courses: " + userCoursesArray);
+  const userCoursesArray = req.query.userCourses;
+  console.log(userCoursesArray)
 
   try {
     // Use the $in operator to filter courses based on the names in userCoursesArray
@@ -102,7 +103,6 @@ router.get('/profileCourses', async (req, res) => {
       courseDepartment: item.fields.courseDepartment,
     }));
 
-    // console.log("coursesFromContentful: ", coursesFromContentful);
     res.json(coursesFromContentful);
   } catch (error) {
     console.error('Error getting user courses from Contentful:', error);
