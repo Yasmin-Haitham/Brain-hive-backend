@@ -52,7 +52,7 @@ router.post("/enroll", async (req, res) => {
 
   try {
     let Coursesdb = await course.findOne({ name: courseName });
-    
+
     if (!Coursesdb) {
       const newCourse = new course({
         name: courseName,
@@ -82,15 +82,14 @@ router.post("/enroll", async (req, res) => {
 });
 
 //get courses from contentful with filter of user courses passed in the req.params
-router.get('/profileCourses', async (req, res) => {
+router.get("/profileCourses", async (req, res) => {
   const userCoursesArray = req.query.userCourses;
-  
 
   try {
     // Use the $in operator to filter courses based on the names in userCoursesArray
     const entries = await contentClient.getEntries({
-      content_type: 'course',
-      'fields.courseName[in]': userCoursesArray,
+      content_type: "course",
+      "fields.courseName[in]": userCoursesArray,
     });
 
     // Transform Contentful data as needed
@@ -99,14 +98,31 @@ router.get('/profileCourses', async (req, res) => {
       courseName: item.fields.courseName,
       description: item.fields.courseDescription,
       courseImage: item.fields.courseImage,
-      courseContent: item.fields.courseContent,
       courseDepartment: item.fields.courseDepartment,
     }));
 
     res.json(coursesFromContentful);
   } catch (error) {
-    console.error('Error getting user courses from Contentful:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error getting user courses from Contentful:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//get a single course all content
+router.get("/content", async (req, res) => {
+  let courseId = req.query.id;
+  try {
+    const entry = await contentClient.getEntry(courseId);
+    if (!entry) {
+      return res.status(404).send(`No course found for ID ${courseId}`);
+    }
+    const apiKey = process.env.API_KEY;
+    res.json({ ...entry.fields, API_KEY: apiKey });
+    
+    
+  } catch (err) {
+    console.log("ERROR GETTING SINGLE COURSE", err);
+    res.status(500).send("Server error");
   }
 });
 
