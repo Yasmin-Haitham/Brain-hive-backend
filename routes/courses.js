@@ -116,9 +116,10 @@ router.get("/content", async (req, res) => {
     if (!entry) {
       return res.status(404).send(`No course found for ID ${courseId}`);
     }
-    const apiKey = process.env.API_KEY;
+    const apiKey = process.env.GOOGLE_API_KEY;
+    console.log("apikey:" + apiKey)
     res.json({ ...entry.fields, API_KEY: apiKey });
-    
+    console.log({ ...entry.fields, API_KEY: apiKey })
     
   } catch (err) {
     console.log("ERROR GETTING SINGLE COURSE", err);
