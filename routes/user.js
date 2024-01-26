@@ -21,7 +21,7 @@ router.get("/", async (req, res) => {
 // Create a route for retrieving data of the logged-in user
 router.get("/profile", (req, res) => {
   res.send(req.user);
-  console.log("profile nav: "+req.user);
+  console.log("profile nav: " + req.user);
 });
 
 //router create user
@@ -38,12 +38,11 @@ router.post("/create", async function (req, res) {
     password: Joi.string().pattern(/^[a-zA-Z0-9]{3,30}$/),
     phoneNumber: Joi.string(),
     LearningStyle: Joi.string()
-    .valid("visual", "auditory", "read", "kinesthetic", null)
-    .insensitive(),
+      .valid("visual", "auditory", "read", "kinesthetic", null)
+      .insensitive(),
     //specializations joi validate is string
     specializations: Joi.string(),
 
-    
     // userType: Joi.string()
     //   .valid("student", "instructor", "admin")
     //   .insensitive(),
@@ -76,7 +75,8 @@ router.post("/create", async function (req, res) {
       PhoneNumber: body.phoneNumber,
       LearningStyle: body.learningStyle,
       UserType: body.userType,
-      enrolledCourses: {}
+      Field: body.specializations,
+      enrolledCourses: {},
     });
 
     // Encrypt the user's password before saving to the database
@@ -121,8 +121,12 @@ router.post("/login", async (req, res, next) => {
       // Handle successful login
       return res
         .status(200)
-        .send({ success: true, message: "Login successful", uid: user._id, LearningStyle: user.LearningStyle });
-      
+        .send({
+          success: true,
+          message: "Login successful",
+          uid: user._id,
+          LearningStyle: user.LearningStyle,
+        });
     });
   })(req, res, next);
 });

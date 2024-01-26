@@ -34,6 +34,7 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 //course enroll
 router.post("/enroll", async (req, res) => {
   console.log("user: " + req.user);
@@ -117,35 +118,46 @@ router.get("/content", async (req, res) => {
       return res.status(404).send(`No course found for ID ${courseId}`);
     }
     const apiKey = process.env.GOOGLE_API_KEY;
-    console.log("apikey:" + apiKey)
+    console.log("apikey:" + apiKey);
     res.json({ ...entry.fields, API_KEY: apiKey });
-    console.log({ ...entry.fields, API_KEY: apiKey })
-    
+    console.log({ ...entry.fields, API_KEY: apiKey });
   } catch (err) {
     console.log("ERROR GETTING SINGLE COURSE", err);
     res.status(500).send("Server error");
   }
 });
-router.get("/feed",async (req,res)=>{
 
-  const userField = req.user.Field
-  
+// recommended courses
+router.get("/recommended", async (req, res) => {
+  try {
+    const userCoursesArray = req.user.enrolledCourses ?? [];
+    const flatteneduserCoursesArray = userCoursesArray.map(
+      (obj) => obj.courseName
+    );
     const entries = await contentClient.getEntries({
       content_type: "course",
-      "fields.courseDepartment": userField,
+      "fields.courseDepartment": req.user.Field,
     });
-    // Transform Contentful data as needed
-    const coursesFromContentful = entries.items.map((item) => ({
+
+    // Filter out courses that the user is already enrolled in
+    const filteredEntries = entries.items.filter(
+      (entry) => !flatteneduserCoursesArray.includes(entry.fields.courseName)
+    );
+
+    const recommendedCourses = filteredEntries.map((item) => ({
       id: item.sys.id,
       courseName: item.fields.courseName,
       description: item.fields.courseDescription,
       courseImage: item.fields.courseImage,
+      courseContent: item.fields.courseContent,
       courseDepartment: item.fields.courseDepartment,
-    })
-    )
-
-    res.json(coursesFromContentful);
-
-})
+    }));
+    console.log(recommendedCourses);
+    res.json(recommendedCourses);
+  } catch (error) {
+    console.error("Error fetching data from Contentful:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 module.exports = router;
