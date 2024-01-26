@@ -45,6 +45,7 @@ const port = process.env.PORT || 3030;
 //define routers
 const userRouter = require("./routes/user");
 const courseRouter = require("./routes/courses");
+const todoRoutes = require("./routes/todo");
 
 //connect the database
 mongoose
@@ -67,6 +68,7 @@ app.use(cors(corsOptions));
 // router
 app.use("/user", userRouter);
 app.use("/courses", courseRouter);
+app.use("/todos", todoRoutes);
 
 // session managment middleware
 app.use((req, res, next) => {
