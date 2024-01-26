@@ -126,5 +126,26 @@ router.get("/content", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+router.get("/feed",async (req,res)=>{
+
+  const userField = req.user.Field
+  
+    const entries = await contentClient.getEntries({
+      content_type: "course",
+      "fields.courseDepartment": userField,
+    });
+    // Transform Contentful data as needed
+    const coursesFromContentful = entries.items.map((item) => ({
+      id: item.sys.id,
+      courseName: item.fields.courseName,
+      description: item.fields.courseDescription,
+      courseImage: item.fields.courseImage,
+      courseDepartment: item.fields.courseDepartment,
+    })
+    )
+
+    res.json(coursesFromContentful);
+
+})
 
 module.exports = router;
