@@ -22,7 +22,6 @@ router.post("/", async (req, res) => {
   try {
     const newTodo = new Todo({
       title: req.body.title,
-      completed: false,
       createdBy: req.body.createdBy
     });
 

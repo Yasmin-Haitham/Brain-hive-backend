@@ -17,6 +17,58 @@ router.get("/", async (req, res) => {
   }
 });
 
+//router add friends
+router.post("/addFriend", async (req, res) => {
+  try {
+    const currentUser = req.user;
+
+    // Find the friend user by email
+    const friendUser = await User.findOne({ email: req.body.friendEmail });
+
+    if (!friendUser) {
+      return res.status(404).json({ message: "Friend not found." });
+    }
+
+    // Check if the friend is already in the user's friends list
+    if (currentUser.Friends.includes(friendUser._id)) {
+      return res.status(400).json({ message: "Friend already added." });
+    }
+
+    // Add the friend to the user's friends list
+    currentUser.Friends.push(friendUser._id);
+    await currentUser.save();
+
+    res.json(currentUser);
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
+//router get friends
+
+router.get("/getFriends", async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Find the user by ID and populate the 'friends' field with limited details
+    const userWithFriends = await User.findById(userId).populate({
+      path: 'Friends',
+      select: 'Name Email ProfilePicturePath totalScore',
+    });
+
+    if (!userWithFriends) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Extract the populated friends array
+    const friends = userWithFriends.Friends;
+
+    res.json(friends);
+    console.log(friends);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 // Create a route for retrieving data of the logged-in user
 router.get("/profile", (req, res) => {
@@ -77,6 +129,8 @@ router.post("/create", async function (req, res) {
       UserType: body.userType,
       Field: body.specializations,
       enrolledCourses: {},
+      totalScore: 0,
+      Friends: [],
     });
 
     // Encrypt the user's password before saving to the database
