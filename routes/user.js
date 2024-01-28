@@ -23,8 +23,10 @@ router.post("/addFriend", async (req, res) => {
     const currentUser = req.user;
 
     // Find the friend user by email
-    const friendUser = await User.findOne({ email: req.body.friendEmail });
-
+    console.log("friend email: "+req.body.friendEmail);
+    const friendUser = await User.findOne({ Email: req.body.friendEmail });
+    
+    console.log("friend user: "+friendUser);
     if (!friendUser) {
       return res.status(404).json({ message: "Friend not found." });
     }

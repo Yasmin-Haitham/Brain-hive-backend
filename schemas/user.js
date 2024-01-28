@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
     KinestheticPercent: { type: Number },
     enrolledCourses:{type: Object},
     totalScore:{type: Number},
-    Friends:[{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    Friends:[{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }]
 });
 
 module.exports = mongoose.model("user", userSchema);
