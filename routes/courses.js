@@ -3,13 +3,21 @@ const express = require("express");
 const router = express.Router();
 const Joi = require("joi");
 const contentful = require("contentful");
-const user = require("../schemas/user");
+const contentfulManagement = require("contentful-management");
+const User = require("../schemas/user");
 const course = require("../schemas/course");
+const achievments = require("../schemas/achievment");
 
 //contentful connect
 const contentClient = contentful.createClient({
   space: process.env.CONTENTFUL_SPACE_ID,
   accessToken: process.env.CONTENTFUL_ACCESS_TOKEN,
+});
+
+// Create a Contentful Management client
+const contentfulManagementClient = contentfulManagement.createClient({
+  space: process.env.CONTENTFUL_SPACE_ID,
+  accessToken: process.env.CONTENTFUL_MANAGEMENT_TOKEN,
 });
 
 // courses from contentful
@@ -62,7 +70,7 @@ router.post("/enroll", async (req, res) => {
       await newCourse.save();
       console.log("New course created");
     }
-    const updatedUser = await user.findOneAndUpdate(
+    const updatedUser = await User.findOneAndUpdate(
       { _id: userId },
       {
         $push: {
@@ -159,5 +167,145 @@ router.get("/recommended", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+// get badges from contentful 
+router.get("/badges", async (req, res) => {
+  try {
+
+    // Fetch user data based on the provided user ID (assuming you have a User model)
+    const user = req.user
+
+    // Check if the user was found
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+     // Get badge names from the user data
+     const badgeNames = user.badges;
+
+    // Check if any badge names were found
+    if (!badgeNames || badgeNames.length === 0) {
+      return res.status(404).json({ error: "User has no badges" });
+    }
+    console.log(badgeNames)
+
+    const entries = await contentClient.getEntries({
+      content_type: "achievementBadge",
+      "fields.name[in]": badgeNames, // Use the 'in' operator to match any name in the array
+    });
+
+    // Check if any entries were found
+    if (!entries.items || entries.items.length === 0) {
+      return res.status(404).json({ error: "Badges not found" });
+    }
+
+    const badges = entries.items.map((item) => ({
+      id: item.sys.id,
+      name: item.fields.name,
+      description: item.fields.description,
+      image: item.fields.image,
+      points: item.fields.points,
+      category: item.fields.category,
+    }));
+
+    res.json(badges);
+    console.log("badges: ", badges);
+    console.log("entries: ", entries);
+  } catch (error) {
+    console.error("Error fetching data from Contentful:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Define a route to get all badges from Contentful
+router.get("/allBadges", async (req, res) => {
+  try {
+    // Fetch all entries of type "badge" from Contentful
+    const entries = await contentClient.getEntries({
+      content_type: "achievementBadge",
+    });
+
+    // Check if any entries were found
+    if (!entries.items || entries.items.length === 0) {
+      return res.status(404).json({ error: "No badges found" });
+    }
+
+    // Transform Contentful data as needed
+    const badges = entries.items.map((item) => ({
+      id: item.sys.id,
+      name: item.fields.name,
+      description: item.fields.description,
+      image: item.fields.image,
+      points: item.fields.points,
+      category: item.fields.status,
+    }));
+
+    // Send the badges in the response
+    res.json(badges);
+  } catch (error) {
+    console.error("Error fetching badges from Contentful:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Define a route to get all content types from Contentful
+router.get("/contentTypes", async (req, res) => {
+  try {
+    // Fetch all content types from Contentful Management API
+    const space = await contentfulManagementClient.getSpace(
+      process.env.CONTENTFUL_SPACE_ID
+    ).then((space) => space.getEnvironment('master'))
+    .then((environment) => environment.getContentTypes())
+    .then((response) => console.log(response.items))
+    .catch(console.error)
+
+  } catch (error) {
+    console.error("Error fetching content types from Contentful:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+router.post("/addBadge", async (req, res) => {
+  try {
+    const { badgeName } = req.body;
+    const userId = req.user._id;
+
+    // Check if userId and badgeName are provided
+    if (!userId || !badgeName) {
+      return res.status(400).json({ error: "userId and badgeName are required" });
+    }
+
+    // Find the user by userId
+    const user = await User.findById(userId);
+
+    // Check if the user exists
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Initialize the badges array if it doesn't exist
+    if (!user.badges) {
+      user.badges = [];
+    }
+
+    // Check if the badge already exists in the user's badges array
+    if (user.badges.includes(badgeName)) {
+      return res.status(400).json({ error: "Badge already added to the user" });
+    }
+
+    // Add the badge to the user's badges array
+    user.badges.push(badgeName);
+    await user.save();
+
+    res.json({ message: "Badge added successfully", user: user });
+  } catch (error) {
+    console.error("Error adding badge to user:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+
 
 module.exports = router;
