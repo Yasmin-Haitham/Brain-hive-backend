@@ -305,6 +305,46 @@ router.post("/addBadge", async (req, res) => {
   }
 });
 
+router.post("/todoToggled", async (req, res) => {
+  try {
+    const { todoId } = req.body;
+    const userId = req.user._id;
+    // Find the user by userId
+    const user = await User.findById(userId);
+    
+    // Check if user is defined
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if user has array todosDone and if not push an empty array called todosDone
+    if (!user.todosDone) {
+      user.todosDone = [];
+    }
+
+    // Check if the todo is already in the array
+    if (user.todosDone.includes(todoId)) {
+      // Remove the todoId from the todosDone array
+      user.todosDone = user.todosDone.filter(id => id !== todoId);
+      // Decrement user score by one
+      user.totalScore -= 1;
+      await user.save();
+      // Return todo is undone
+      res.status(200).json({ todoDone: false, todosDone: user.todosDone });
+    } else {
+      // Add the todoId to the todoDone array
+      user.todosDone.push(todoId);
+      // Increment user score by one
+      user.totalScore += 1;
+      await user.save();
+      // Return todo is done
+      res.status(200).json({ todoDone: true, todosDone: user.todosDone });
+    }
+  } catch (error) {
+    console.error("Error toggling todo:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 
 

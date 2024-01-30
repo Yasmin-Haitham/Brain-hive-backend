@@ -20,6 +20,10 @@ const userSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
+  todosDone: {
+    type: [String],
+    default: [],
+  },
 });
 
 module.exports = mongoose.model("user", userSchema);
