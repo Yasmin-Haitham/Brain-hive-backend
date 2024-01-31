@@ -85,12 +85,19 @@ router.post("/enroll", async (req, res) => {
     }
 
     // Add the courseName to the enrolledCourses array if it doesn't exist
-    if (
-      !user.enrolledCourses.includes(courseName)
-    ) {
-      console.log("courseName: "+ courseName)
-      user.enrolledCourses.push({ courseName: courseName });
+   
+    const isCourseEnrolled = user.enrolledCourses.find(
+      (course) => course.courseName === courseName
+    );
+    
+    if (!isCourseEnrolled) {
+      console.log("coursename: " + courseName);
+      user.enrolledCourses = [
+        ...user.enrolledCourses,
+        { courseName: courseName }
+      ];
     }
+    
 
     // Save the changes to the user document
     const updatedUser = await user.save();
@@ -100,8 +107,6 @@ router.post("/enroll", async (req, res) => {
     return res
       .status(200)
       .json({ message: "User enrolled in the course", user: updatedUser });
-
-  
   } catch (error) {
     console.error(error);
     // Handle specific errors and send appropriate responses to the client
