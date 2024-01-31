@@ -332,14 +332,34 @@ router.post("/addBadge", async (req, res) => {
       user.badges = [];
     }
 
+    // Initialize the totalScore if it doesn't exist
+    if (!user.totalScore) {
+      user.totalScore = 0;
+    }
+
     // Loop through each badgeName and add it to the user's badges array
     for (const badgeName of badgeNames) {
       // Check if the badge already exists in the user's badges array
       if (user.badges.includes(badgeName)) {
         console.warn(`Badge '${badgeName}' already added to the user`);
       } else {
-        // Add the badge to the user's badges array
-        user.badges.push(badgeName);
+        // Find the badge in Contentful to get its points
+        const badgeEntry = await contentClient.getEntries({
+          content_type: "achievementBadge",
+          "fields.name": badgeName,
+        });
+
+        if (badgeEntry.items.length > 0) {
+          const badgePoints = badgeEntry.items[0].fields.points;
+
+          // Add the badge to the user's badges array
+          user.badges.push(badgeName);
+          
+          // Add the badge points to the user's totalScore
+          user.totalScore += badgePoints;
+        } else {
+          console.warn(`Badge '${badgeName}' not found in Contentful`);
+        }
       }
     }
 
