@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
   ReadingPercent: { type: Number },
   KinestheticPercent: { type: Number },
   enrolledCourses: { type: Object },
-  enrolledDepartaments:{
+  enrolledDepartments:{
     type: [String],
     default: [],
   },

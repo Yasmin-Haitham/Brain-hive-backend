@@ -8,8 +8,6 @@ const User = require("../schemas/user");
 const course = require("../schemas/course");
 const achievments = require("../schemas/achievment");
 
-
-
 //contentful connect
 const contentClient = contentful.createClient({
   space: process.env.CONTENTFUL_SPACE_ID,
@@ -49,9 +47,8 @@ router.get("/", async (req, res) => {
 router.post("/enroll", async (req, res) => {
   console.log("user: " + req.user);
   const userId = req.user._id;
-  let courseId = req.body.courseId;
+  const courseId = req.body.courseId;
   const courseName = req.body.courseName;
-  const courseDepartment = req.body.courseDepartment;
 
   const entries = await contentClient.getEntry(courseId);
 
@@ -60,6 +57,7 @@ router.post("/enroll", async (req, res) => {
   }
 
   const existingCourse = entries; // Access the first entry
+  const courseDepartment = existingCourse.fields.courseDepartment;
 
   try {
     let Coursesdb = await course.findOne({ name: courseName });
@@ -73,25 +71,37 @@ router.post("/enroll", async (req, res) => {
       console.log("New course created");
     }
 
-    const updatedUser = await User.findOneAndUpdate(
-      { _id: userId },
-      {
-        $push: {
-          enrolledCourses: {
-            courseName: courseName, // Store only course reference
-          },
-        },
-        $addToSet: {
-          enrolledDepartments: {
-            courseDepartment: courseDepartment, // Store only unique course reference
-          },
-        },
-      },
-      { new: true }
-    );
+    // Find the user by userId
+    const user = await User.findById(userId);
 
+    // Check if the user exists
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Add the courseDepartment to the enrolledDepartments array if it doesn't exist
+    if (!user.enrolledDepartments.includes(courseDepartment)) {
+      user.enrolledDepartments.push(courseDepartment);
+    }
+
+    // Add the courseName to the enrolledCourses array if it doesn't exist
+    if (
+      !user.enrolledCourses.includes(courseName)
+    ) {
+      console.log("courseName: "+ courseName)
+      user.enrolledCourses.push({ courseName: courseName });
+    }
+
+    // Save the changes to the user document
+    const updatedUser = await user.save();
+
+    // Return the modified user document
     console.log("User enrolled in the course", updatedUser);
-    return res.status(200).json(updatedUser);
+    return res
+      .status(200)
+      .json({ message: "User enrolled in the course", user: updatedUser });
+
+  
   } catch (error) {
     console.error(error);
     // Handle specific errors and send appropriate responses to the client
@@ -277,33 +287,33 @@ const determineBadges = (user, functionName) => {
   const badgesEarned = [];
   switch (functionName) {
     case "enroll":
-      if ((user.enrolledDepartments.length = 2)) {
+      if (user.enrolledDepartments.length === 2) {
         badgesEarned.push("Diverse Explorer");
       }
-      if ((user.enrolledCourses.length = 1)) {
+      if (user.enrolledCourses.length === 1) {
         badgesEarned.push("First Step Forward");
       }
-      if ((user.enrolledCourses.length = 5)) {
+      if (user.enrolledCourses.length === 5) {
         badgesEarned.push("Marathon Learner");
       }
-      if ((user.enrolledCourses.length = 30)) {
+      if (user.enrolledCourses.length === 30) {
         badgesEarned.push("Lifelong Learner");
       }
       break;
     case "login":
-      if ((user.loginCounter = 30)) {
+      if (user.loginCounter === 30) {
         badgesEarned.push("Consistency Champion");
       }
       break;
     case "todoToggled":
-      if ((user.todosDone.length = 5)) {
+      if (user.todosDone.length === 5) {
         badgesEarned.push("Hands-On Hero");
       }
       break;
     default:
       break;
   }
-  return badgesEarned
+  return badgesEarned;
 };
 
 router.post("/addBadge", async (req, res) => {
@@ -354,7 +364,7 @@ router.post("/addBadge", async (req, res) => {
 
           // Add the badge to the user's badges array
           user.badges.push(badgeName);
-          
+
           // Add the badge points to the user's totalScore
           user.totalScore += badgePoints;
         } else {
@@ -371,7 +381,6 @@ router.post("/addBadge", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 router.post("/todoToggled", async (req, res) => {
   try {
