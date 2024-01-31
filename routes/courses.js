@@ -8,6 +8,8 @@ const User = require("../schemas/user");
 const course = require("../schemas/course");
 const achievments = require("../schemas/achievment");
 
+
+
 //contentful connect
 const contentClient = contentful.createClient({
   space: process.env.CONTENTFUL_SPACE_ID,
@@ -49,7 +51,7 @@ router.post("/enroll", async (req, res) => {
   const userId = req.user._id;
   let courseId = req.body.courseId;
   const courseName = req.body.courseName;
-  console.log("course name: " + courseName);
+  const courseDepartment = req.body.courseDepartment;
 
   const entries = await contentClient.getEntry(courseId);
 
@@ -70,12 +72,18 @@ router.post("/enroll", async (req, res) => {
       await newCourse.save();
       console.log("New course created");
     }
+
     const updatedUser = await User.findOneAndUpdate(
       { _id: userId },
       {
         $push: {
           enrolledCourses: {
             courseName: courseName, // Store only course reference
+          },
+        },
+        $addToSet: {
+          enrolledDepartments: {
+            courseDepartment: courseDepartment, // Store only unique course reference
           },
         },
       },
@@ -87,6 +95,7 @@ router.post("/enroll", async (req, res) => {
   } catch (error) {
     console.error(error);
     // Handle specific errors and send appropriate responses to the client
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -168,26 +177,25 @@ router.get("/recommended", async (req, res) => {
   }
 });
 
-// get badges from contentful 
+// get badges from contentful
 router.get("/badges", async (req, res) => {
   try {
-
     // Fetch user data based on the provided user ID (assuming you have a User model)
-    const user = req.user
+    const user = req.user;
 
     // Check if the user was found
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-     // Get badge names from the user data
-     const badgeNames = user.badges;
+    // Get badge names from the user data
+    const badgeNames = user.badges;
 
     // Check if any badge names were found
     if (!badgeNames || badgeNames.length === 0) {
       return res.status(404).json({ error: "User has no badges" });
     }
-    console.log(badgeNames)
+    console.log(badgeNames);
 
     const entries = await contentClient.getEntries({
       content_type: "achievementBadge",
@@ -252,28 +260,63 @@ router.get("/allBadges", async (req, res) => {
 router.get("/contentTypes", async (req, res) => {
   try {
     // Fetch all content types from Contentful Management API
-    const space = await contentfulManagementClient.getSpace(
-      process.env.CONTENTFUL_SPACE_ID
-    ).then((space) => space.getEnvironment('master'))
-    .then((environment) => environment.getContentTypes())
-    .then((response) => console.log(response.items))
-    .catch(console.error)
-
+    const space = await contentfulManagementClient
+      .getSpace(process.env.CONTENTFUL_SPACE_ID)
+      .then((space) => space.getEnvironment("master"))
+      .then((environment) => environment.getContentTypes())
+      .then((response) => console.log(response.items))
+      .catch(console.error);
   } catch (error) {
     console.error("Error fetching content types from Contentful:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
+//determine badges
+const determineBadges = (user, functionName) => {
+  const badgesEarned = [];
+  switch (functionName) {
+    case "enroll":
+      if ((user.enrolledDepartments.length = 2)) {
+        badgesEarned.push("Diverse Explorer");
+      }
+      if ((user.enrolledCourses.length = 1)) {
+        badgesEarned.push("First Step Forward");
+      }
+      if ((user.enrolledCourses.length = 5)) {
+        badgesEarned.push("Marathon Learner");
+      }
+      if ((user.enrolledCourses.length = 30)) {
+        badgesEarned.push("Lifelong Learner");
+      }
+      break;
+    case "login":
+      if ((user.loginCounter = 30)) {
+        badgesEarned.push("Consistency Champion");
+      }
+      break;
+    case "todoToggled":
+      if ((user.todosDone.length = 5)) {
+        badgesEarned.push("Hands-On Hero");
+      }
+      break;
+    default:
+      break;
+  }
+  return badgesEarned
+};
 
 router.post("/addBadge", async (req, res) => {
   try {
-    const { badgeName } = req.body;
+    const { functionName } = req.body;
+    const badgeNames = determineBadges(req.user, functionName);
     const userId = req.user._id;
 
-    // Check if userId and badgeName are provided
-    if (!userId || !badgeName) {
-      return res.status(400).json({ error: "userId and badgeName are required" });
+    // Check if userId and badgeNames are provided
+    if (!userId || !badgeNames || !Array.isArray(badgeNames)) {
+      return res
+        .status(400)
+        .json({ error: "userId and badgeNames are required as an array" });
     }
 
     // Find the user by userId
@@ -289,21 +332,26 @@ router.post("/addBadge", async (req, res) => {
       user.badges = [];
     }
 
-    // Check if the badge already exists in the user's badges array
-    if (user.badges.includes(badgeName)) {
-      return res.status(400).json({ error: "Badge already added to the user" });
+    // Loop through each badgeName and add it to the user's badges array
+    for (const badgeName of badgeNames) {
+      // Check if the badge already exists in the user's badges array
+      if (user.badges.includes(badgeName)) {
+        console.warn(`Badge '${badgeName}' already added to the user`);
+      } else {
+        // Add the badge to the user's badges array
+        user.badges.push(badgeName);
+      }
     }
 
-    // Add the badge to the user's badges array
-    user.badges.push(badgeName);
     await user.save();
 
-    res.json({ message: "Badge added successfully", user: user });
+    res.json({ message: "Badges added successfully", user: user });
   } catch (error) {
     console.error("Error adding badge to user:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 router.post("/todoToggled", async (req, res) => {
   try {
@@ -311,7 +359,7 @@ router.post("/todoToggled", async (req, res) => {
     const userId = req.user._id;
     // Find the user by userId
     const user = await User.findById(userId);
-    
+
     // Check if user is defined
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -325,7 +373,7 @@ router.post("/todoToggled", async (req, res) => {
     // Check if the todo is already in the array
     if (user.todosDone.includes(todoId)) {
       // Remove the todoId from the todosDone array
-      user.todosDone = user.todosDone.filter(id => id !== todoId);
+      user.todosDone = user.todosDone.filter((id) => id !== todoId);
       // Decrement user score by one
       user.totalScore -= 1;
       await user.save();
@@ -345,7 +393,5 @@ router.post("/todoToggled", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
-
 
 module.exports = router;

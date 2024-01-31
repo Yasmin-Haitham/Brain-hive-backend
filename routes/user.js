@@ -155,7 +155,7 @@ router.post("/create", async function (req, res) {
 
 // Login User Route
 router.post("/login", async (req, res, next) => {
-  await passport.authenticate("local", (err, user, info) => {
+  await passport.authenticate("local", async (err, user, info) => {
     if (err) {
       return next(err);
     }
@@ -165,6 +165,10 @@ router.post("/login", async (req, res, next) => {
         .status(401)
         .json({ success: false, message: "Authentication failed" });
     }
+    // Increase loginCounter by one
+    user.loginCounter = (user.loginCounter || 0) + 1;
+    await user.save();
+    
     req.login(user, (err) => {
       if (err) {
         return next(err);

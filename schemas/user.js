@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema({
   ReadingPercent: { type: Number },
   KinestheticPercent: { type: Number },
   enrolledCourses: { type: Object },
+  enrolledDepartaments:{
+    type: [String],
+    default: [],
+  },
+  loginCounter: {type: Number},
   totalScore: { type: Number },
   Friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
   badges: {
