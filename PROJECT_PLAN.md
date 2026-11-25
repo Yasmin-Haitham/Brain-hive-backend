@@ -1,6 +1,6 @@
 # Brain Hive — Project Plan & Status
 
-_Last updated: 2026-11-25 (repo split)_
+_Last updated: 2026-11-26 (backlog loaded into Jira)_
 
 ## Roles
 
@@ -49,8 +49,13 @@ How the agent team works is described in [WORKFLOW.md](WORKFLOW.md).
 - [ ] **Agents and branch guard:** six role agents in `.claude/agents/`, the `protect-branches` hook (blocks direct changes to `main`/`staging`/`dev` and unprefixed branches; tested), and `.env` read/edit denied to agents. PR `chore/ai-agent-team` → `dev` in both repos; also adds `.env` to `.gitignore` (the old root `.gitignore` didn't come along in the split).
 - [ ] **Archive the old `gp` repo (PO):** GitHub → `gp` → Settings → Danger Zone → Archive this repository, once these PRs are merged.
 - [ ] **Branch protection (PO, optional but recommended):** now available because the repos are public. Protect `main`, `staging` and `dev`: require a PR, block force pushes and deletion.
-- [x] **Backlog drafted and approved:** [docs/backlog.md](docs/backlog.md): 29 stories in 8 epics, security fixes first. Found while drafting: unauthenticated profile updates, to-dos visible and editable across users, and routes crashing for signed-out users (GP-1 to GP-3).
-- [ ] **Jira board (PO first):** create a free Jira Cloud site (Kanban project, key `GP`), authorize the Atlassian connector (`claude` in a terminal, then `/mcp`), and install "GitHub for Jira" on both repos. Then, in a new chat, Claude creates the epics and stories from `docs/backlog.md`, adds the Ready and In Review columns, and the PO marks the first batch Ready (suggested: GP-9, GP-1, GP-2, GP-3, GP-20).
+- [x] **Backlog drafted and approved:** [docs/backlog.md](docs/backlog.md): 29 stories in 8 epics, security fixes first. Found while drafting: unauthenticated profile updates, to-dos visible and editable across users, and routes crashing for signed-out users (Jira GP-5 to GP-7).
+- [x] **Backlog loaded into Jira** (2026-11-26): [Brain Hive board](https://jassy6700.atlassian.net/jira/software/projects/GP/boards/1), project `GP` (team-managed). 29 stories (GP-5 to GP-33) with acceptance criteria, labels and priorities, under 8 epics (GP-34 to GP-41), with 15 "blocks" links and 1 "relates" link (GP-18 is best done after GP-17). **Jira is now the source of truth; `docs/backlog.md` is a record.**
+  - **Keys are offset by 4:** Jira's sample items took GP-1 to GP-4, so backlog GP-N = Jira GP-(N+4). The mapping is at the top of [docs/backlog.md](docs/backlog.md). Always use the Jira key in branches, commits and PRs.
+  - `In Review` already exists as a status.
+- [ ] **Ready column and first batch (PO, needs Jira sign-in):** add a `Ready` column between To Do and In Progress (board → ⋯ → Configure board → Columns), then move the first batch to Ready: **GP-13** (API test setup), **GP-5, GP-6, GP-7** (security fixes), **GP-24** (backend CI). These are backlog GP-9, GP-1, GP-2, GP-3, GP-20. Claude can do the moves through the connector once the column exists.
+- [ ] **Clean up Jira's sample items (PO):** delete GP-1 "Task 1", GP-2 "Task 2", GP-3 "Task 3" and subtask GP-4. They aren't part of the backlog.
+- [ ] **Install "GitHub for Jira"** on both repos (PO, tracked as GP-31).
 - [ ] **Overnight runs:** a scheduled cloud agent that takes Ready stories, opens PRs and posts a morning summary. Start with 1–2 stories a night, after one supervised daytime trial run.
 
 ## In progress (PO action)
@@ -74,7 +79,7 @@ How the agent team works is described in [WORKFLOW.md](WORKFLOW.md).
 
 ## Known issues / tech debt
 
-- **Security (fix before deploying):** `PUT /user/update/:id` has no auth and accepts any field; `/todos` returns and modifies every user's to-dos; routes using `req.user` crash when signed out. Tracked as GP-1 to GP-4 in [docs/backlog.md](docs/backlog.md).
+- **Security (fix before deploying):** `PUT /user/update/:id` has no auth and accepts any field; `/todos` returns and modifies every user's to-dos; routes using `req.user` crash when signed out. Tracked as Jira GP-5 to GP-8 (epic GP-34).
 
 - Old secrets are still in git history (here and in upstream `usefhanii/gp`). Rotating them (step 2) is the fix; we decided not to rewrite history.
 - `GOOGLE_API_KEY` is returned to the browser in the single-course API response.
@@ -95,6 +100,7 @@ How the agent team works is described in [WORKFLOW.md](WORKFLOW.md).
 ## Tools available to Claude
 
 - `gh` CLI signed in to GitHub (repos, PRs, issues)
+- Atlassian (Jira) connector for site `jassy6700.atlassian.net`: create, edit, link and transition issues. It can't change board columns; that's done in the Jira UI. The connector uses Atlassian's deprecated V1 endpoint (removed 2027-03-01): reconnect it from Claude's connector directory before then.
 - MongoDB Atlas connector (read and write granted; a new chat is needed to load the write tools)
 - Skills: `karpathy-guidelines`, the engineering plugin (`code-review`, `testing-strategy`, `deploy-checklist`, `system-design`, `debug`, `documentation`), `/security-review`, `/code-review`, `/run`
 - Skills worth adding from mcpmarket: Docker Patterns, Deployment Patterns, E2E Testing Patterns (Playwright), Coding Standards (TypeScript/React/Node), Vite Patterns. Prefer original sources over the copies on that site, and read each skill before installing.

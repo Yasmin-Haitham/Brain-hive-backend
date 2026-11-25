@@ -2,6 +2,8 @@
 
 _Approved by the PO on 2026-11-25 (order included). Claude loads these into Jira once the Atlassian connector is authorized; after that, Jira is the source of truth and this file is a record._
 
+> **Loaded into Jira on 2026-11-26.** Jira is now the source of truth. Jira's sample items took GP-1 to GP-4, so **every story key below is 4 lower than its Jira key: backlog GP-N = Jira GP-(N+4)** (GP-1 → GP-5, …, GP-29 → GP-33). Epics 1–8 are Jira GP-34 to GP-41. Use the Jira key in branches, commits and PRs.
+
 **Proposed Jira setup:** one project, key **GP** (matches the branch and commit examples in WORKFLOW.md), **Kanban** board with columns **Backlog → Ready → In Progress → In Review → Done**. The night shift only takes stories from **Ready**, so that column is how you choose what gets built.
 
 **Labels:** `backend` / `frontend` (which repo), `po-action` (needs you: accounts, keys, settings), `security`.
