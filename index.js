@@ -10,6 +10,12 @@ const bodyParse = require("body-parser");
 
 const uri = process.env.CONNECTION_STRING;
 
+// Signs session cookies. Must be set in production; the fallback is for local dev only.
+const sessionSecret = process.env.SESSION_SECRET || "dev-only-insecure-secret";
+if (!process.env.SESSION_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("SESSION_SECRET must be set in production");
+}
+
 //create express server
 const app = express();
 
@@ -28,7 +34,7 @@ const corsOptions = {
 
 app.use(
   session({
-    secret: "secret",
+    secret: sessionSecret,
     resave: true,
     saveUninitialized: true,
     cookie: {
@@ -37,7 +43,7 @@ app.use(
   })
 );
 //cookie parser
-app.use(cookieParser("secret"));
+app.use(cookieParser(sessionSecret));
 //set port
 const port = process.env.PORT || 3030;
 
