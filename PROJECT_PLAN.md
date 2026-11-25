@@ -49,7 +49,8 @@ How the agent team works is described in [WORKFLOW.md](WORKFLOW.md).
 - [ ] **Agents and branch guard:** six role agents in `.claude/agents/`, the `protect-branches` hook (blocks direct changes to `main`/`staging`/`dev` and unprefixed branches; tested), and `.env` read/edit denied to agents. PR `chore/ai-agent-team` → `dev` in both repos; also adds `.env` to `.gitignore` (the old root `.gitignore` didn't come along in the split).
 - [ ] **Archive the old `gp` repo (PO):** GitHub → `gp` → Settings → Danger Zone → Archive this repository, once these PRs are merged.
 - [ ] **Branch protection (PO, optional but recommended):** now available because the repos are public. Protect `main`, `staging` and `dev`: require a PR, block force pushes and deletion.
-- [ ] **Jira board (PO first):** create a free Jira Cloud site and authorize the Atlassian connector (`/mcp` in a Claude Code terminal). Then Claude creates epics and stories from the steps below, and the PO marks the first batch Ready.
+- [x] **Backlog drafted and approved:** [docs/backlog.md](docs/backlog.md): 29 stories in 8 epics, security fixes first. Found while drafting: unauthenticated profile updates, to-dos visible and editable across users, and routes crashing for signed-out users (GP-1 to GP-3).
+- [ ] **Jira board (PO first):** create a free Jira Cloud site (Kanban project, key `GP`), authorize the Atlassian connector (`claude` in a terminal, then `/mcp`), and install "GitHub for Jira" on both repos. Then, in a new chat, Claude creates the epics and stories from `docs/backlog.md`, adds the Ready and In Review columns, and the PO marks the first batch Ready (suggested: GP-9, GP-1, GP-2, GP-3, GP-20).
 - [ ] **Overnight runs:** a scheduled cloud agent that takes Ready stories, opens PRs and posts a morning summary. Start with 1–2 stories a night, after one supervised daytime trial run.
 
 ## In progress (PO action)
@@ -72,6 +73,8 @@ How the agent team works is described in [WORKFLOW.md](WORKFLOW.md).
 11. **Docs:** a README with setup, env vars and deploy steps, reusable for other projects.
 
 ## Known issues / tech debt
+
+- **Security (fix before deploying):** `PUT /user/update/:id` has no auth and accepts any field; `/todos` returns and modifies every user's to-dos; routes using `req.user` crash when signed out. Tracked as GP-1 to GP-4 in [docs/backlog.md](docs/backlog.md).
 
 - Old secrets are still in git history (here and in upstream `usefhanii/gp`). Rotating them (step 2) is the fix; we decided not to rewrite history.
 - `GOOGLE_API_KEY` is returned to the browser in the single-course API response.
